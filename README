@@ -1,0 +1,12 @@
+I built DAOS because I found it frustrating to try to pick background colors
+for my Web sites using only the analysis tools available online at the time.
+I felt that this method (picking a color and checking it against an
+analyzer) wasted a lot of my time. What I needed was a tool that would take
+what I'd already chosen and tell me which background colors would match it
+well.
+So, I built DAOS. The first two versions were written in c++ and relied on
+third-party code I couldn't distribute freely.
+This third version is entirely unencumbered code, so I'm able to release it
+in its entirety to the Public Domain.
+Enjoy it.
+
