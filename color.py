@@ -396,7 +396,7 @@ def main(): # The main event
     print "{0} colors.</p>".format(case[str(inc)])
   else:
     print "An error occurred during processing."
-  print "<p class=\"extra\">DAOS (Don&#039;t Analyze Only, Suggest) color suggestion CGI program. Version Main 3.0 - Released January 31, 2012 (2.0 - Released July 4, 2009; 1.0 - Released July 4, 2008 to give freedom to Web designers by giving them suggestions when their color pairings don't work in an analyzer.)</p>"); // Tell the user a little bit about this program. Lofty, isn't it?
+  print "<p class=\"extra\">DAOS (Don&#039;t Analyze Only, Suggest) color suggestion CGI program. Version Main 3.0 - Released January 31, 2012 (2.0 - Released July 4, 2009; 1.0 - Released July 4, 2008 to give freedom to Web designers by giving them suggestions when their color pairings don't work in an analyzer.)</p>" # Tell the user a little bit about this program. Lofty, isn't it?
   parrot("color2.htf")
   return 0
 
