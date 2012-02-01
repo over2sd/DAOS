@@ -1,0 +1,14 @@
+/* Stylesheet color.css */
+.pair { display: inline-block; float: left; border: 2px inset #000; margin: 1px; }
+.unit { display: inline; float: left; border: 0px; padding: 5px; font-weight: bold; font-size: 1.1em; font-family: "Bitstream Vera Sans Mono" monospace; width: 5.25em; text-align: center; }
+.yourcolor { border: 7px solid; text-align: center; font-weight: normal; }
+.b0 { border-color: #808080; }
+.b1 { border: 2px solid; }
+.b2 { border: 2px dashed; font-style: italic; }
+.b3 { border: 2px dotted #600; font-style: italic; }
+.oddline { background-color: #ccc; }
+.evenline { background-color: #eee; }
+.bad { background-color: #300; color: #f90; }
+.clr { clear: both; }
+ul { list-style: none; clear: left; height: 3em; margin: 0; }
+li { position: relative; float: left; padding-right: 1em; }

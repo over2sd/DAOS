@@ -1,0 +1,28 @@
+<form name="input" action="color.py" method="post">
+<ul class="oddline">Base Color: <li>#<input type="text" name="color" size="7" maxlength="6"> (3 or 6 digits)</li></ul>
+<ul class="evenline">Contrast Filter: <li><input type="radio" name="cm" value="1" checked="checked">WCAG2</li>
+<li><input type="radio" name="cm" value="3">WCAG2 sorted by lum</li>
+<li><input type="radio" name="cm" value="0">Contrast/Brightness (old way)</li>
+<li><input type="radio" name="cm" value="2">Unfiltered (show lum ratios)</li>
+</ul>
+<ul class="oddline">Colorspace: <li><input type="radio" name="iv" value="51"> WebSafe</li>
+<li><input type="radio" name="iv" checked="checked" value="17"> WebSmart</li>
+<li><input type="radio" name="iv" value="1">All (Generates huge pages - Use with extreme caution!)</li></ul>
+<ul class="evenline">Hue Filter: <li><input type="radio" name="cp" checked="checked" value="0">All</li>
+<li><input type="radio" name="cp" value="1">Reds</li>
+<li><input type="radio" name="cp" value="2">Greens</li>
+<li><input type="radio" name="cp" value="3">Yellows</li>
+<li><input type="radio" name="cp" value="4">Blues</li>
+<li><input type="radio" name="cp" value="5">Magentas</li>
+<li><input type="radio" name="cp" value="6">Cyans</li>
+<li><input type="radio" name="cp" value="7">Greys</li></ul>
+<ul class="oddline">Hue Range:<li>r:<input type="text" name="minr" size="4" maxlength="3" value="0"></li><li>-<input type="text" name="maxr" size="4" maxlength="3" value="255"></li><li>g:<input type="text" name="ming" size="4" maxlength="3" value="0"></li><li>-<input type="text" name="maxg" size="4" maxlength="3" value="255"></li><li>b:<input type="text" name="minb" size="4" maxlength="3" value="0"></li><li>-<input type="text" name="maxb" size="4" maxlength="3" value="255"></li>
+</ul>
+<ul class="evenline">Text Type (for WCAG2 only): (size;good,min)
+<li><input type="radio" name="sz" value="h">Header (*&gt;=18; 3.5,3)</li>
+<li><input type="radio" name="sz" value="b">Bold (14&lt;*&lt;18; 4.5,3)</li>
+<li><input type="radio" name="sz" value="n" checked="checked">Normal (*&lt;=14; 5,4.5)</li>
+<li><input type="radio" name="sz" value="e">Enhanced Contrast (*;7, 5)</li></ul>
+<input type="hidden" name="end" value="1">
+<ul class="oddline"><li><input type="submit" value="Submit"></li></ul>
+</form>
