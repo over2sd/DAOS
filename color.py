@@ -29,7 +29,7 @@
 from math import (fabs, pow)
 from operator import itemgetter
 import cgi
-import cgitb; cgitb.enable()
+# import cgitb; cgitb.enable()
 import codecs
 
 # CLEARBUF() char ch; while ((ch = getchar()) != '\n' and ch != EOF);
@@ -380,8 +380,8 @@ def main(): # The main event
       if nr > maxr: break
       goOn = True
 #    print colors
-  else:
-    print "I received: " + color
+  # else:
+    # print "I received: " + color
   if goOn:
     if method == 3:
       colors = sorted(colors,key=itemgetter(1), reverse = True)
@@ -394,8 +394,8 @@ def main(): # The main event
     case['17'] = "Web smart"
     case['51'] = "WebSafe"
     print "{0} colors.</p>".format(case[str(inc)])
-  else:
-    print "An error occurred during processing."
+  # else:
+    # print "An error occurred during processing."
   print "<p class=\"extra\">DAOS (Don&#039;t Analyze Only, Suggest) color suggestion CGI program. Version Main 3.0 - Released January 31, 2012 (2.0 - Released July 4, 2009; 1.0 - Released July 4, 2008 to give freedom to Web designers by giving them suggestions when their color pairings don't work in an analyzer.)</p>" # Tell the user a little bit about this program. Lofty, isn't it?
   parrot("color2.htf")
   return 0
