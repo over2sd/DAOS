@@ -3,6 +3,7 @@
 """
 # Color Suggesting Program
 /*******************************
+  110: Modifications necessary for GTK frontend (June 2, 2012)
   109: Okay, that only took one day. Version 3.0 - Finished January 31, 2012
   096: Began porting from C++ to Python (January 31, 2012)
  * Version 2.0 - Finished June 30, 2009
@@ -28,8 +29,6 @@
 
 from math import (fabs, pow)
 from operator import itemgetter
-import cgi
-# import cgitb; cgitb.enable()
 import codecs
 
 # CLEARBUF() char ch; while ((ch = getchar()) != '\n' and ch != EOF);
@@ -43,6 +42,8 @@ LCUT = 0.03928
 MAXMATCHES = 4000
 MAXSORTED = 2500
 BUILD = "109"
+MSTACK = []
+OUTPUT = "cli"
 
 def sanityCheck(r,g,b, verbose = 1):
   """Given three integer values (red,blue,green), this function checks
@@ -133,8 +134,8 @@ def getContrast(r1,g1,b1,r2,g2,b2):
   return int(diff(r1,r2) + diff(g1,g2) + diff(b1,b2))
 
 def storeGoodColors(r,g,b,lumratio):
-  """Given three ints and a float, stores the two colors represented and
-  the ratio of their luminosities in tuples and returns them for easy
+  """Given three ints and a float, stores the color represented and the ratio
+  of its luminosity to the base color in a tuple and returns it for easy
   printing. (tuple)
   """
   a = "%02X%02X%02X" % (r,g,b)
@@ -169,7 +170,7 @@ def parrot(filename):
 def stringTo(h):
   """Given a hex string, returns the decimal value in an integer."""
   d = [0,0]
-  h = h[:2] # We only do numbers up to two places.
+  h = h[:2] # We only do numbers exactly two places.
   for i in range(len(h)):
     if "abcdefABCDEF0123456789".find(h[i]) != -1:
       d[i] = int(h[i],16)
@@ -225,6 +226,103 @@ def isValid(h):
   else:
     return False
 
+def valColor(color):
+  """Given a color in the form of a string (#)R(R)G(G)B(B), returns a valid 6-character string RRGGBB, or None if length is not 3 or 6."""
+  if color[0] == '#': # Trim leading hash, if present
+    color = color[1:]
+  if len(color) == 3: # How long was the input color? Some day, I ought to check if it's 3 and make it convert that to 6, like browsers do.
+    color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2]
+  if len(color) != 6: # Invalid color code length. Color code must be 6 or 3 characters.
+    color = None
+  else:
+    for i in range(6):
+      if isValid(color[i]):
+        goOn = True
+      else:
+        message = "Only hexadecimal digits are valid! (0-9, a-f)"
+        if OUTPUT == "cgi": print message
+        MSTACK.append(message)
+        color = None
+        i = 7
+      i += 1
+  return color
+
+def valMinMax(minr,ming,minb,maxr,maxg,maxb):
+  """Given minimums (3 ints) and maximums (3 ints) for Red, Green, and Blue,
+  respectively, returns a tuple of the same values, validated and adjusted for
+  error (e.g., max<min)."""
+  if minr < 0: minr = 0 # If the minimum is less than zero, silly user, 0 is the bottom!
+  if maxr < minr: maxr = minr # If the max is less than the minimum, silly user, minimum is the minimum!
+  if maxr > 255: maxr = 255 # If the maximum is more than 255, silly user, 255 is the top!
+  maxr += 1 # Increase the maximum by one, so we'll include the max in our tests
+  if ming < 0: ming = 0 # Silly user, 0 is the bottom!
+  if maxg < ming: maxg = ming # Silly user, check minimum and maximum in your dictionary!
+  if maxg > 255: maxg = 255 # Silly user, 255 is the top!
+  maxg += 1 # For test if (x>=max)
+  if minb < 0: minb = 0 # Silly user, we can't start below 0!
+  if maxb < minb: maxb = minb # Silly user, max must be greater than min!
+  if maxb > 255: maxb = 255 # Silly user, there are no colors above 255!
+  maxb += 1 # One for the road, please.
+  return (minr,ming,minb,maxr,maxg,maxb)
+
+def contLevels(sizeType):
+  """Given a sizeType value (char), returns a tuple of the bare minimum and
+  easy-to-read minimum as two floats."""
+  if sizeType == 'h': # ...it's going to be header text, 18 or bigger.
+    cM = 3.0
+    cG = 3.5 # Minimum display and good values for header text 
+  elif sizeType == 'b': # ...it's going to be between 14 and 18, or bold text.
+    cM = 3.0
+    cG = 4.5 # Minimum display and good values for bold or medium text
+  elif sizeType == 'n': # ...it's going to be normal body copy, 14 or smaller.
+    cM = 4.5
+    cG = 5.0 # Minimum display and good values for normal text.
+  else: # ...we want enhanced contrast (any size text) sizeType == 'e'.
+      # ...or the user tried to send us something we didn't expect, so poo on them.
+    cM = 5.0
+    cG = 7.0 # Minimum display and good values for enhanced contrast at any size!
+  return (cM,cG)
+
+def unStringColor(color):
+  """Given a valid 6-character hexcode, returns a tuple of three ints
+  representing RGB values."""
+  rr = stringTo(color[:2])
+  gg = stringTo(color[2:4])
+  bb = stringTo(color[4:6])
+#    print "Your color: " + str(rr) + "," + str(gg) + "," + str(bb) + "."
+  return (rr,gg,bb)
+
+def colorVitals(rr,gg,bb):
+  """Given three ints for red, green, and blue values, returns a tuple of the
+  given color's brightness, contrast with black, contrast with white, and
+  luminosity."""
+  colorbrightness = getBrightness(rr,gg,bb) # How bright is the given color?
+  cont0 = getContrast(rr,gg,bb,0,0,0) # How much does this color contrast with black?
+  contf = getContrast(rr,gg,bb,255,255,255) # How much does this color contrast with white?
+  givenLum = lum(rr,gg,bb) # What is the color's luminosity?
+  return (colorbrightness,cont0,contf,givenLum)
+
+def getLoops(minr,ming,minb,maxr,maxg,maxb,inc):
+  """Given 6 ints for minimum RGB and maximum RGB and one int for the increment,
+  returns a tuple of three lists containing every value the checker will loop
+  through."""
+  r = []
+  g = []
+  b = []
+  ib = minb
+  while ib < maxb:
+    b.append(ib)
+    ib += inc
+  ig = ming
+  while ig < maxg:
+    g.append(ig)
+    ig += inc
+  ir = minr
+  while ir < maxr:
+    r.append(ir)
+    ir += inc
+  return (r,g,b)
+
 def main(): # The main event
   """This function is run when called from the shell, of course."""
   print "Content-Type: text/html\n\n"
@@ -262,56 +360,22 @@ def main(): # The main event
     maxg = int(query.getvalue("maxg","255")) # Maximum value of green to test against given color
     maxb = int(query.getvalue("maxb","255")) # Maximum value of blue to test against given color
     sizeType = query.getvalue("sz",'n')[:1] # We only care about the first character, no matter what the browser sent us.
-    if len(color) == 3: # How long was the input color? Some day, I ought to check if it's 3 and make it convert that to 6, like browsers do.
-      color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2]
-    if len(color) != 6: # Invalid color code length. Color code must be 6 or 3 characters.
+    color = valColor(color)
+    if color is None:
+      print "</p>"
       parrot("colorask.htf") # Print the form.
       goOn = False
     else:
+      goOn = True
       print "." # Let the user know we're doing something
-      if minr < 0: minr = 0 # If the minimum is less than zero, silly user, 0 is the bottom!
-      if maxr < minr: maxr = minr # If the max is less than the minimum, silly user, minimum is the minimum!
-      if maxr > 255: maxr = 255 # If the maximum is more than 255, silly user, 255 is the top!
-      maxr += 1 # Increase the maximum by one, so we'll include the max in our tests
-      if ming < 0: ming = 0 # Silly user, 0 is the bottom!
-      if maxg < ming: maxg = ming # Silly user, check minimum and maximum in your dictionary!
-      if maxg > 255: maxg = 255 # Silly user, 255 is the top!
-      maxg += 1 # For test if (x>=max)
-      if minb < 0: minb = 0 # Silly user, we can't start below 0!
-      if maxb < minb: maxb = minb # Silly user, max must be greater than min!
-      if maxb > 255: maxb = 255 # Silly user, there are no colors above 255!
-      maxb += 1 # One for the road, please.
+      (minr,ming,minb,maxr,maxg,maxb) = valMinMax(minr,ming,minb,maxr,maxg,maxb)
       # Based on the character 'sizeType'...
-      if sizeType == 'h': # ...it's going to be header text, 18 or bigger.
-        cM = 3.0
-        cG = 3.5 # Minimum display and good values for header text 
-      elif sizeType == 'b': # ...it's going to be between 14 and 18, or bold text.
-        cM = 3.0
-        cG = 4.5 # Minimum display and good values for bold or medium text
-      elif sizeType == 'n': # ...it's going to be normal body copy, 14 or smaller.
-        cM = 4.5
-        cG = 5.0 # Minimum display and good values for normal text.
-      else: # ...we want enhanced contrast (any size text) sizeType == 'e'.
-          # ...or the user tried to send us something we didn't expect, so poo on them.
-        cM = 5.0
-        cG = 7.0 # Minimum display and good values for enhanced contrast at any size!
-      for i in range(6):
-        if isValid(color[i]):
-          goOn = True
-        else:
-          print "Only hexadecimal digits are valid! (0-9, a-f)</p>"
-          parrot("colorask.htf") # Print the form.
-          goOn = False
-          i = 7
-        i += 1
+      (cM,cG) = contLevels(sizeType)
   print "</p>\n"
   if goOn:
-    rr = stringTo(color[:2])
-    gg = stringTo(color[2:4])
-    bb = stringTo(color[4:6])
-#    print "Your color: " + str(rr) + "," + str(gg) + "," + str(bb) + "."
-    if inc == 1: inc = sanityCheck(rr,gg,bb) #  If we're testing all colors, decide if this is something a sane person would do.
+    (rr,gg,bb) = unStringColor(color)
     if method == 2: inc = 51 # Method 2 always displays every color, so we'll only do it with the WebSafe colorspace.
+    if inc == 1: inc = sanityCheck(rr,gg,bb) #  If we're testing all colors, decide if this is something a sane person would do.
     print "<p>Using increments of {0}...".format(inc),
     if hue != 0: # Looking at hue...
       print "limited to ",
@@ -326,29 +390,11 @@ def main(): # The main event
     print " Color range used is r:{0}-{1}/g:{2}-{3}/b:{4}-{5}.</p>".format(minr,maxr - 1,ming,maxg - 1,minb,maxb - 1), # Tell user about requested (or corrected) color ranges.
     goOn = False; # Don't continue... unless the next test passes.
     print "<p class=\"yourcolor\" style=\"border-color: #{0};\">Color entered: R: {1} G: {2} B: {3} (#{0})</p>".format(color, rr,gg,bb) # Remind user of the given color. It's been so long, I almost forgot.
-    colorbrightness = getBrightness(rr,gg,bb) # How bright is the given color?
-    cont0 = getContrast(rr,gg,bb,0,0,0) # How much does this color contrast with black?
-    contf = getContrast(rr,gg,bb,255,255,255) # How much does this color contrast with white?
-    givenLum = lum(rr,gg,bb) # What is the color's luminosity?
+    (colorbrightness,cont0,contf,givenLum) = colorVitals(rr,gg,bb)
     print "<p>Color has a brightness of <strong>" + str(colorbrightness) + "</strong>",
     print " and a luminance of <em>{0:.2%}</em>.".format(givenLum),
     print " Its contrast with black is <strong>" + str(cont0) + "</strong>, and its contrast with white is <strong>" + str(contf) + "</strong>.</p>" # The user might be interested in this information. Tell the user what we've learned.
-    bloop = []
-    ib = minb
-    while ib < maxb:
-      bloop.append(ib)
-      ib += inc
-    gloop = []
-    ig = ming
-    while ig < maxg:
-      gloop.append(ig)
-      ig += inc
-    rloop = []
-    ir = minr
-    while ir < maxr:
-      rloop.append(ir)
-      ir += inc
-
+    (rloop,gloop,bloop) = getLoops(minr,ming,minb,maxr,maxg,maxb,inc)
     for nr in rloop: #Red loop: Start at minr, stop at maxr, increment by inc every time around.
       for ng in gloop: #Green loop: Start at ming, stop at maxg, increment by inc every time around.
         for nb in bloop: #Blue loop: Start at minb, stop at maxb, increment by inc every time around.
@@ -369,19 +415,17 @@ def main(): # The main event
               if nratio >= cG: # Is the color match a preferable match?
                 colorMatches += 1
           if cD >= MAXMATCHES: # If we have a lot of colors to display...
-            nb = 256; ng = 256; nr = 256 # Set all tests to above the maximum maximum to break out of the loops.
+            bloop = []; gloop = []; rloop = [] # Break out of the loops.
             print "<p class=\"bad clr\">Maximum matches (" + str(MAXMATCHES) + ") reached. Aborting process to save server resources!</p>" # Tell the user that there were too many.
+            break
           if colorMatches >= MAXSORTED and method == 3: # If we have a lot of colors to sort...
-            nb = 256; ng = 256; nr = 256 # Set all tests to above the maximum maximum to break out of the loops.
+            bloop = []; gloop = []; rloop = [] # Break out of the loops.
             print "<p class=\"bad clr\">Maximum sorted matches (" + str(MAXSORTED) + ") reached. Aborting process to prevent browser spinning!</p>"
-          nb = 256 # safety valve
-          if nb > maxb: break
-        if ng > maxg: break
-      if nr > maxr: break
+            break
       goOn = True
 #    print colors
   # else:
-    # print "I received: " + color
+  #   print "I received: " + color
   if goOn:
     if method == 3:
       colors = sorted(colors,key=itemgetter(1), reverse = True)
@@ -402,4 +446,6 @@ def main(): # The main event
 
 # Standard boilerplate to call the main()
 if __name__ == '__main__':
+  import cgi
+  OUTPUT = "cgi"
   main()
