@@ -415,11 +415,11 @@ def main(): # The main event
               if nratio >= cG: # Is the color match a preferable match?
                 colorMatches += 1
           if cD >= MAXMATCHES: # If we have a lot of colors to display...
-            bloop = []; gloop = []; rloop = [] # Break out of the loops.
+            bloop = []
             print "<p class=\"bad clr\">Maximum matches (" + str(MAXMATCHES) + ") reached. Aborting process to save server resources!</p>" # Tell the user that there were too many.
             break
           if colorMatches >= MAXSORTED and method == 3: # If we have a lot of colors to sort...
-            bloop = []; gloop = []; rloop = [] # Break out of the loops.
+            bloop = []
             print "<p class=\"bad clr\">Maximum sorted matches (" + str(MAXSORTED) + ") reached. Aborting process to prevent browser spinning!</p>"
             break
       goOn = True
