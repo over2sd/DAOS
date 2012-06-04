@@ -410,6 +410,24 @@ def setFromCombo(caller,program,vals):
   else:
     say(0,"Invalid choice passed to setFromCombo: %d > %d!\n" % (i,len(vals)))
 
+def showAbout(caller,parent):
+  a = gtk.AboutDialog()
+  a.set_program_name("DAOS (Don't Analyze Only--Suggest!)")
+  a.set_version(version)
+  a.set_website("http://www.github.com/over2sd/daos")
+  a.set_authors(["Lincoln Sayger",])
+  a.set_comments("Color suggestion GTK frontend.\nReleased June 4, 2012\nThe first version of this utility was a CGI program released July 4, 2008\n Purpose: Give freedom to Web designers by giving them suggestions when their color pairings don't work in an analyzer.") # Tell the user a little bit about this program. Lofty, isn't it?
+  a.set_license("  This program is Public Domain. In places where there is no PD,\
+  this program is released under a Creatiuve Commons 0 license. In places where\
+  that is not honored, this program is released under the following license terms:\
+  \n Permission is granted to all persons to use, modify, redistribute, display,\
+  and in all other ways derive benefit from this program with or without\
+  recognition of its original author, without cost, worldwide, in perpetuity.")
+  a.set_wrap_license(True)
+  a.set_transient_for(parent)
+  a.run()
+  a.destroy()
+
 def triggerProcess(caller,c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method,hue,target):
   caller.set_sensitive(False)
   c = c.get_text()
@@ -431,7 +449,6 @@ def triggerProcess(caller,c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method,hu
   say(0,"{0} colors.".format(case[str(inc)]))
   displayColors(method,c,sizeType,target)
   caller.set_sensitive(True)
-#  say(0,"DAOS (Don&#039;t Analyze Only, Suggest) color suggestion CGI program. Version Main 3.0 - Released January 31, 2012 (2.0 - Released July 4, 2009; 1.0 - Released July 4, 2008 to give freedom to Web designers by giving them suggestions when their color pairings don't work in an analyzer.)") # Tell the user a little bit about this program. Lofty, isn't it?
 
 class Base:
   def __init__(self):
@@ -454,6 +471,10 @@ class Base:
     self.bb = gtk.HBox()
     self.bb.show()
     self.bb.pack_end(qbutton,0,0,2)
+    abutton = gtk.Button("About")
+    abutton.connect("clicked",showAbout,self.window)
+    abutton.show()
+    self.bb.pack_end(abutton,0,0,2)
     sbox = statuswindow
     sbox.set_editable(False)
     sbox.set_wrap_mode(gtk.WRAP_WORD)
