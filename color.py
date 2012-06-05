@@ -3,7 +3,7 @@
 """
 # Color Suggesting Program
 /*******************************
-  110: Modifications necessary for GTK frontend (June 2, 2012)
+  110-111: Modifications necessary for GTK frontend (June 2-5, 2012)
   109: Okay, that only took one day. Version 3.0 - Finished January 31, 2012
   096: Began porting from C++ to Python (January 31, 2012)
  * Version 2.0 - Finished June 30, 2009
@@ -41,7 +41,7 @@ LCUT = 0.03928
 # /* After this many matching (displayed) colors, abort */
 MAXMATCHES = 4000
 MAXSORTED = 2500
-BUILD = "109"
+BUILD = "111"
 MSTACK = []
 OUTPUT = "cli"
 
@@ -84,11 +84,12 @@ def chkHue(r,g,b,h):
     5: magentas
     6: cyans
     7: grays/greys
+    8: no preference, but instead of boolean return, give color's actual hue type as return
   """
   # Maximum difference between the two inputs that should be similar
   maxdiff = 35
   # Minimum difference between dominant/recessive input and the other two
-  mingap = 5 * 17
+  mingap = 4 * 17
   if h == 0: return True # No requested hue, all colors are good.
   if h == 1:
     if r > (getLargest(g,b) + mingap): # More red?
@@ -117,7 +118,24 @@ def chkHue(r,g,b,h):
   if h == 7:
     if r == g and r == b: # Inputs equal (gray)?
       return True
-  return False # h == 7 and hue not gray, or invalid hue passed. Display no colors.
+    else: return False # h == 7 and hue not gray, or invalid hue passed. Display no colors.
+  if h == 8:
+    if r == g and r == b: # Inputs equal (gray)?
+      return 7
+    if diff(r,b) < maxdiff and b > (g + mingap) and r > (g + mingap): # Less green (magentas)?
+      return 5
+    if diff(b,g) < maxdiff and b > (r + mingap) and g > (r + mingap): # Less red (cyans)?
+      return 6
+    if diff(r,g) < maxdiff and r > (b + mingap) and g > (b + mingap): # Less blue (yellows)?
+      return 3
+    if r > (getLargest(g,b) + mingap): # More red?
+      return 1
+    if g > (getLargest(r,b) + mingap): # More green?
+      return 2
+    if b > (getLargest(g,r) + mingap): # More blue?
+      return 4
+    return 0 # can't happen, but just in case...
+  return False # invalid hue
 
 def getBrightness(r,g,b):
   """Given three component values, returns the brightness of the

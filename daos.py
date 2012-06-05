@@ -8,7 +8,7 @@ from operator import itemgetter
 
 import color
 
-BUILD = 59
+BUILD = 86
 version = "3.5"
 LINESTACK = []
 MAXMATCHES = 4000
@@ -175,7 +175,7 @@ def buildUI(self,bb):
   say(0,".")
   pb.show()
   bb.pack_start(pb,0,0,4)
-  pb.connect("clicked",triggerProcess,c,nr,ng,nb,xr,xg,xb,iv,sz,cm,cp,colbox)
+  pb.connect("clicked",triggerProcess,c,nr,ng,nb,xr,xg,xb,iv,sz,cm,cp,colbox,self.get_parent())
   return
 
 def compileColors(c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,**kwargs):
@@ -278,7 +278,7 @@ def compileColors(c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,**kwargs):
             bloop = []
             say(0,"Maximum sorted matches (" + str(MAXSORTED) + ") reached. Aborting process to prevent browser spinning!\n")
             break
-  print "."
+  print ".",
   return colors
 
 def displayColors(method,c,sz,box):
@@ -362,11 +362,6 @@ def sayGoodColors(given,match,ok,good,box):
     l2.set_text("( %s )" % l2.get_text())
   l1.set_tooltip_text("{ratio:.3f}:1".format(ratio = match[1]))
   l2.set_tooltip_text("{ratio:.3f}:1".format(ratio = match[1]))
-#  print "title=\><div class=\"unit\" style=\"color: ",
-#  print "#{one}; background-color: #{two};\">#{one}".format(one = given, two = match[0]),
-#  print "</div><div class=\"unit\" style=\"color: ",
-#  print "#{one}; background-color: #{two};\">#{one}".format(one = match[0], two = given),
-#  print "</div></div>"
   l1.modify_base(gtk.STATE_NORMAL,c1)
   l1.modify_text(gtk.STATE_NORMAL,c2)
   l2.modify_base(gtk.STATE_NORMAL,c2)
@@ -428,7 +423,45 @@ def showAbout(caller,parent):
   a.run()
   a.destroy()
 
-def triggerProcess(caller,c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method,hue,target):
+def showBestHues(caller,parent,sizeType,given):
+  global colors
+  onlybest = True # some day, I might change this so it shows top 5 or so of each hue
+  (ok,good) = color.contLevels(sizeType)
+  given = color.valColor(given)
+  cbyhue = [[],[],[],[],[],[],[],[]]
+  best = ("None",0.00)
+  for c in sorted(colors,key=itemgetter(1), reverse = True):
+    (rr,gg,bb) = color.unStringColor(c[0])
+    h = color.chkHue(rr,gg,bb,8) # get hue
+    cbyhue[h].append(c) # add color to hue list
+  for x in range(8):
+    if len(cbyhue[x]) > 0:
+      if cbyhue[x][0][1] > best[1]:
+         best = cbyhue[x][0]
+      if onlybest: cbyhue[x] = cbyhue[x][0]
+      # print "%s: %s" % (x,cbyhue[x])
+  w = gtk.MessageDialog(parent,gtk.DIALOG_DESTROY_WITH_PARENT,gtk.MESSAGE_INFO,gtk.BUTTONS_OK,"Best of each hue:")
+  hn = ["error","Red","Green","Yellow","Blue","Magenta","Cyan","Gray"]
+  for h in range(8):
+    if h is 0: pass
+    elif len(cbyhue[h]) > 0:
+      row = gtk.HBox()
+      row.show()
+      label = gtk.Label("%s:" % hn[h])
+      label.show()
+      if onlybest and cbyhue[h] == best:
+        mk = gtk.Label("*")
+        mk.show()
+        row.pack_start(mk,0,0,1)
+      row.pack_start(label,1,1,3)
+      # some day, I might change this to list the top 5 using a loop
+      sayGoodColors(given,cbyhue[h],ok,good,row)
+      w.vbox.pack_start(row,0,0,0)
+  w.run()
+  w.destroy()
+
+
+def triggerProcess(caller,c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method,hue,target,parent):
   caller.set_sensitive(False)
   c = c.get_text()
   minr = int(minr.get_value()); ming = int(ming.get_value()); minb = int(minb.get_value())
@@ -437,17 +470,27 @@ def triggerProcess(caller,c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method,hu
   hue = hue.get_active()
   for x in target.get_children():
     x.destroy()
-  print "%s %s-%s %s-%s %s-%s /%s %s: %s? %s" % (c,minr,maxr,ming,maxg,minb,maxb,inc,sizeType,method,hue)
+#  print "%s %s-%s %s-%s %s-%s /%s %s: %s? %s" % (c,minr,maxr,ming,maxg,minb,maxb,inc,sizeType,method,hue)
   compileColors(c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,method=method,hue=hue)
-  print colors[0]
   say(1,"Color {0} has {1} good matches in the range of".format(
       c,len(colors))) # Tell the user how many matches were found.
   case = {}
   case['1'] = "all"
   case['17'] = "Web smart"
   case['51'] = "WebSafe"
-  say(0,"{0} colors.".format(case[str(inc)]))
+  say(0,"{0} colors.\n".format(case[str(inc)]))
   displayColors(method,c,sizeType,target)
+  bb = caller.get_parent()
+  blist = bb.get_children()
+  for b in blist:
+    if b.get_label() not in ["Start","About","Quit"]:
+      b.destroy()
+  but = gtk.Button("Show Best")
+  but.set_tooltip_text(c)
+  but.show()
+  bb.pack_start(but,0,0,2)
+  but.connect("clicked",showBestHues,parent,sizeType,c)
+
   caller.set_sensitive(True)
 
 class Base:
@@ -498,15 +541,14 @@ class Base:
     gtk.main()
 
   def delete_event(self,widget,event,data=None):
-    print self.window.get_size()
-#    print "delete event occurred"
     return False
 
   def destroy(self,widget,data=None):
     gtk.main_quit()
 
 if __name__ == "__main__":
-  print "...",
+  print "%s..." % BUILD,
   OUTPUT = "gtk"
   base = Base()
   base.main()
+  print "...%s" % BUILD
