@@ -5,6 +5,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 from operator import itemgetter
+from lumgrid import lumlib
 
 import color
 
@@ -267,6 +268,7 @@ def compileColors(c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,**kwargs):
                   cD += 1; colorMatches += 1
             elif nratio >= cM or method == '2': # Is the color match good enough to display?
               colors.append(color.storeGoodColors(nr,ng,nb,nratio))
+              color.storeLumRatios(rr,gg,bb,nr,ng,nb,nratio)
               cD += 1
               if nratio >= cG: # Is the color match a preferable match?
                 colorMatches += 1
@@ -546,9 +548,18 @@ class Base:
   def destroy(self,widget,data=None):
     gtk.main_quit()
 
+# from debug import printPretty
+
+def storeGrid():
+#  for x in sorted(lumlib.keys()):
+#    print "%s: %s " % (x,lumlib[x])
+  print "Grid size %i" % len(lumlib)
+  color.savelumlib()
+
 if __name__ == "__main__":
   print "%s..." % BUILD,
   OUTPUT = "gtk"
   base = Base()
   base.main()
+  storeGrid()
   print "...%s" % BUILD

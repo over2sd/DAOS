@@ -30,6 +30,8 @@
 from math import (fabs, pow)
 from operator import itemgetter
 import codecs
+from lumgrid import lumlib
+import os
 
 # CLEARBUF() char ch; while ((ch = getchar()) != '\n' and ch != EOF);
 # /* Luminance contribution multipliers */
@@ -159,6 +161,43 @@ def storeGoodColors(r,g,b,lumratio):
   a = "%02X%02X%02X" % (r,g,b)
   c = (a,lumratio)
   return c
+
+def commonList(lista,listb):
+  common = []
+  for x in lista:
+    if x in listb:
+      common.append(x)
+  return common
+
+def storeLumRatios(rr,gg,bb,nr,ng,nb,nratio):
+  global lumlib
+  a = "%02X%02X%02X" % (rr,gg,bb)
+  b = "%02X%02X%02X" % (nr,ng,nb)
+  (c,d) = sorted((str(a),str(b)))
+  try:
+    lumlib[str(c)][str(d)] = str(nratio)[:7]
+  except KeyError:
+    try:
+      lumlib[str(c)] = {}
+      lumlib[str(c)][str(d)] = nratio
+    except KeyError:
+      return 1
+  return 0
+
+def savelumlib():
+  global lumlib
+  finaloutput = "lumlib = {out}\n".format(out = lumlib)
+  fn = os.path.join(os.path.abspath("./lumgrid.py"))
+  try:
+    with codecs.open(fn,'wU','UTF-8') as f:
+      f.write(finaloutput)
+      f.close()
+  except IOError as e:
+    message = "The file %s could not be saved: %s" % (fn,e)
+    print "?%s" % message
+    return False
+  return True
+
 
 def sayGoodColors(given,match,ok,good):
   """Given string, a tuple (string,ratio), a minimum ratio, and a
