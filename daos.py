@@ -9,11 +9,11 @@ from lumgrid import lumlib
 
 import color
 
-BUILD = 86
+BUILD = 91
 version = "3.5"
 LINESTACK = []
-MAXMATCHES = 4000
-MAXSORTED = 2500
+MAXMATCHES = 3000
+MAXSORTED = 2000
 colors = []
 status = gtk.TextBuffer()
 statuswindow = gtk.TextView(status)
@@ -256,8 +256,16 @@ def compileColors(c,minr,ming,minb,maxr,maxg,maxb,inc,sizeType,**kwargs):
       for ng in gloop: #Green loop: Start at ming, stop at maxg, increment by inc every time around.
         for nb in bloop: #Blue loop: Start at minb, stop at maxb, increment by inc every time around.
           if color.chkHue(nr,ng,nb,int(hue)): # Is the color we're testing of the proper hue type?
-            nLum = color.lum(nr,ng,nb) # Luminance of the tested color is what?
-            nratio = color.lumrat(givenLum,nLum) # Ratio of tested luminance vs. given color's luminance is what?
+            nratio = 0.0
+            try:
+              nc = "%02X%02X%02X" % (nr,ng,nb)
+              (c1,c2) = sorted((str(nc),str(c)))
+              nratio = float(lumlib[str(c1)][str(c2)])
+              print "!",
+            except KeyError:
+              print "?",
+              nLum = color.lum(nr,ng,nb) # Luminance of the tested color is what?
+              nratio = color.lumrat(givenLum,nLum) # Ratio of tested luminance vs. given color's luminance is what?
             if method == '0': # Use the old contrast/Brightness method (deprecated)
               nBright = color.getBrightness(nr,ng,nb) # Check out the brightness of this color.
               brightDiff = color.fabs(nBright - colorBrightness) # How different is it?

@@ -174,19 +174,40 @@ def storeLumRatios(rr,gg,bb,nr,ng,nb,nratio):
   a = "%02X%02X%02X" % (rr,gg,bb)
   b = "%02X%02X%02X" % (nr,ng,nb)
   (c,d) = sorted((str(a),str(b)))
+  wid = 7
   try:
-    lumlib[str(c)][str(d)] = str(nratio)[:7]
+    lumlib[str(c)][str(d)] = str(nratio)[:wid]
   except KeyError:
     try:
       lumlib[str(c)] = {}
-      lumlib[str(c)][str(d)] = nratio
+      lumlib[str(c)][str(d)] = str(nratio)[:wid]
     except KeyError:
       return 1
   return 0
 
+def prettyStringDict(d,t = "  "):
+  if (d == {}): return "{}"
+  try:
+    e = sorted(d.keys())
+  except KeyError: # d has no keys
+    return "{}" # d is supposed to be a dict, so no keys = empty dict
+  lines = []
+  for f in e:
+    if ("{out}".format(out = d[f])[:1] == '{'):
+      lines.append("\n%s'%s': %s," % (t,f,prettyStringDict(d[f],"%s  " % t)))
+    else:
+      lines.append("'%s': '%s'," % (f,d[f]))
+  lines[len(lines) - 1] = lines[len(lines) - 1][:-1]
+  lines.append("}")
+  out = "{"
+  for line in lines:
+    out += line
+  return out
+
 def savelumlib():
   global lumlib
-  finaloutput = "lumlib = {out}\n".format(out = lumlib)
+  lines = []
+  finaloutput = "lumlib = %s\n" % prettyStringDict(lumlib)
   fn = os.path.join(os.path.abspath("./lumgrid.py"))
   try:
     with codecs.open(fn,'wU','UTF-8') as f:
