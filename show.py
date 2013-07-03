@@ -26,7 +26,7 @@ def findCommon(keys):
   for x in range(len(keys)):
     try:
       tmp.append([x,len(lumlib[keys[x]].keys())])
-    except KeyError as k:
+    except KeyError as k: # TODO: Fix this so it doesn't keep analyzing colors with no higher pairings.
       print "Analyzing BG color %s..." % k
       (rloop,gloop,bloop) = color.getLoops(0,0,0,255,255,255,51) # all websafe colors only
       for nr in rloop: #Red loop: Start at minr, stop at maxr, increment by inc every time around.
@@ -78,7 +78,7 @@ def magicSort(a,b):
     out.append(d[0])
   return out
 
-def main(colors,bgcols):
+def showOff(colors,bgcols):
   color.parrot("color1.htf")
   print "<p>Foreground colors being tried: "
   for c in colors:
@@ -135,6 +135,31 @@ def main(colors,bgcols):
   return 0
 
 if __name__ == "__main__":
-  colors = ["111111","003333","CCFFCC","550000","000055","FFFFFF","000000"]
-  bgcols = ["6699FF","000055","CCFFCC","99CCFF","550000","007700","FFFF00"]
-  main(colors,bgcols)
+  import sys
+
+  colors = ["111111","003333"]
+  bgcols = ["CCFFCC","99CCFF"]
+  opts = sys.argv[1:]
+  for o in range(len(opts)):
+    if (opts[o] == "-i"):
+      from getcolors import parseFileList
+      flist = []
+      off = 0
+      o += 1
+      for p in opts[o:]:
+        if (p.startswith("-")):
+#          print o
+          break
+        else:
+          o += 1
+          flist.append(p)
+#      print flist
+      coldic = parseFileList(flist)
+      colors = sorted(coldic['fg'])
+      bgcols = sorted(coldic['bg'])
+    elif (opts[o] == "-h"):
+      print "  Usage:"
+      print "%s - Uses internal list of colors" % sys.argv[0]
+      print "%s <file> - Reads colors from <file> (wildcards valid)" % sys.argv[0]
+      sys.exit(0)
+  showOff(colors,bgcols)

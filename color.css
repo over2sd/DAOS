@@ -14,6 +14,7 @@
 .clr { clear: both; }
 ul { list-style: none; clear: left; height: 3em; margin: 0; }
 li { position: relative; float: left; padding-right: 1em; }
+td.cgood, td.cmin { font-family: monospace; }
 .cgood:after { content: "*" }
 .cmin, .cgood { padding: 3px; }
 /* .cbad { text-decoration: line-through; background: #000; color: #fff; } */

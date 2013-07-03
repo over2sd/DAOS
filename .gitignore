@@ -2,4 +2,4 @@
 README~
 *.pyc
 tmp.htm
-
+.gitignore
